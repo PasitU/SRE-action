@@ -1,0 +1,55 @@
+name: Deploy Docker
+
+on:
+  workflow_dispatch:
+    inputs:
+      ip_address:
+        description: 'Enter the IP address of the remote VM'
+        required: true
+        
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 10.13.104.60 >> ~/.ssh/known_hosts  # Adds the remote host to known_hosts
+
+      - name: SSH into VM and clone repo
+        run: |
+          ssh -i ~/.ssh/id_rsa ansible@10.13.104.60 <<EOF
+            git clone https://github.com/Espesso/SRE-Frontend.git
+            git clone https://github.com/Espesso/SRE-Backend-DB.git
+            git clone https://github.com/PasitU/SRE-monitoring
+            mv ./SRE-monitoring/docker-compose.yml ./
+            sudo docker compose up -d --build
+          EOF
+
+      - name: Wait for containers to be up
+        run: |
+          # SSH into the VM and check if the containers are up
+          ssh -i ~/.ssh/id_rsa ansible@10.13.104.60 <<'EOF'
+            # Expected number of containers (adjust as needed)
+            expected_count=3
+            max_retries=10
+            retries=0
+
+            # Wait loop
+            while [ $(docker ps -q | wc -l) -lt $expected_count ]; do
+              if [ $retries -ge $max_retries ]; then
+                echo "Max retries reached. Not all containers are up."
+                exit 1  # Fail the job if max retries are reached
+              fi
+              echo "Waiting for containers to start... Attempt $((retries+1))/$max_retries"
+              retries=$((retries+1))
+              sleep 10  # Wait for 10 seconds before checking again
+            done
+
+            echo "All containers are up and running!"
+          EOF
