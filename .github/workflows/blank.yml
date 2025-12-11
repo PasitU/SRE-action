@@ -27,6 +27,8 @@ jobs:
         run: |
           echo $SSH_KEY_PATH
           ssh -i ./privatekey ansible@${{ github.event.inputs.ip_address }}<<EOF
+            sudo docker compose down || true
+            rm -rf ./*
             git clone https://github.com/Espesso/SRE-Frontend.git
             git clone https://github.com/Espesso/SRE-Backend-DB.git
             git clone https://github.com/PasitU/SRE-monitoring
