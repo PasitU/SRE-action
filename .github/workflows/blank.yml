@@ -44,7 +44,7 @@ jobs:
             retries=0
 
             # Wait loop
-            while [ $(docker ps -q | wc -l) -lt $expected_count ]; do
+            while [ $(sudo docker ps -q | wc -l) -lt $expected_count ]; do
               if [ $retries -ge $max_retries ]; then
                 echo "Max retries reached. Not all containers are up."
                 exit 1  # Fail the job if max retries are reached
