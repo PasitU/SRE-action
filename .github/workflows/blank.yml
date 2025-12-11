@@ -30,7 +30,7 @@ jobs:
             git clone https://github.com/Espesso/SRE-Frontend.git
             git clone https://github.com/Espesso/SRE-Backend-DB.git
             git clone https://github.com/PasitU/SRE-monitoring
-            mv ./SRE-monitoring/docker-compose.yml ./
+            mv ./SRE-monitoring/docker-compose.yaml ./
             sudo docker compose up -d --build
           EOF
 
