@@ -14,16 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up SSH
+      - name: Create SSH key
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 10.13.104.60 >> ~/.ssh/known_hosts  # Adds the remote host to known_hosts
+          mkdir -p ~/.ssh/
+          echo "$SSH_PRIVATE_KEY" > ../private.key
+          sudo chmod 600 ../private.key
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
+          SSH_KEY_PATH: ${{ github.workspace }}/../private.key
 
       - name: SSH into VM and clone repo
         run: |
-          ssh -i ~/.ssh/id_rsa ansible@10.13.104.60 <<EOF
+          ssh -i $SSH_KEY_PATH ansible@${{ github.event.inputs.ip_address }}<<EOF
             git clone https://github.com/Espesso/SRE-Frontend.git
             git clone https://github.com/Espesso/SRE-Backend-DB.git
             git clone https://github.com/PasitU/SRE-monitoring
@@ -34,7 +38,7 @@ jobs:
       - name: Wait for containers to be up
         run: |
           # SSH into the VM and check if the containers are up
-          ssh -i ~/.ssh/id_rsa ansible@10.13.104.60 <<'EOF'
+          ssh -i ~/.ssh/id_rsa ansible@${{ github.event.inputs.ip_address }} <<'EOF'
             # Expected number of containers (adjust as needed)
             expected_count=3
             max_retries=10
