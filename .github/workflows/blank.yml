@@ -16,10 +16,8 @@ jobs:
 
       - name: Create SSH key
         run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_PRIVATE_KEY" > ./private.key
+          echo "$SSH_PRIVATE_KEY" > ./privatekey
           sudo chmod 600 ../private.key
-          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
         shell: bash
         env:
           SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
@@ -27,7 +25,8 @@ jobs:
 
       - name: SSH into VM and clone repo
         run: |
-          ssh -i $SSH_KEY_PATH ansible@${{ github.event.inputs.ip_address }}<<EOF
+          echo $SSH_KEY_PATH
+          ssh -i ./privatekey ansible@${{ github.event.inputs.ip_address }}<<EOF
             git clone https://github.com/Espesso/SRE-Frontend.git
             git clone https://github.com/Espesso/SRE-Backend-DB.git
             git clone https://github.com/PasitU/SRE-monitoring
@@ -38,7 +37,7 @@ jobs:
       - name: Wait for containers to be up
         run: |
           # SSH into the VM and check if the containers are up
-          ssh -i ~/.ssh/id_rsa ansible@${{ github.event.inputs.ip_address }} <<'EOF'
+          ssh -i ./privatekey ansible@${{ github.event.inputs.ip_address }} <<'EOF'
             # Expected number of containers (adjust as needed)
             expected_count=3
             max_retries=10
